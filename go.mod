@@ -12,4 +12,5 @@ require (
 	github.com/jinzhu/gorm v1.9.15
 	github.com/unknwon/com v1.0.1
 	gopkg.in/dgrijalva/jwt-go.v3 v3.2.0 // indirect
+	github.com/gomodule/redigo v2.0.1-0.20180401191855-9352ab68be13+incompatible
 )
