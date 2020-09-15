@@ -26,7 +26,6 @@ var (
 	LogSaveName string
 	LogFileExt  string
 	TimeFormat  string
-
 )
 
 type App struct {
@@ -133,7 +132,6 @@ func LoadApp() {
 	TimeFormat = sec.Key("TimeFormat").MustString("20060102")
 
 }
-
 
 // mapTo map section
 func mapTo(section string, v interface{}) {

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 
 	"gin-orm/app/models"
+	"gin-orm/app/service/cache_service"
 	"gin-orm/pkg/gredis"
 	"gin-orm/pkg/logging"
-	"gin-orm/app/service/cache_service"
 )
 
 type Article struct {
@@ -108,17 +108,17 @@ func (a *Article) GetAll() ([]*models.Article, error) {
 	return articles, nil
 }
 
-func (a *Article) Delete() error  {
-	 models.DeleteArticle(a.ID)
-	 return nil
+func (a *Article) Delete() error {
+	models.DeleteArticle(a.ID)
+	return nil
 }
 
 func (a *Article) ExistByID() (bool, error) {
-	 models.ExistArticleByID(a.ID)
+	models.ExistArticleByID(a.ID)
 }
 
 func (a *Article) Count() (int, error) {
-	 models.GetArticleTotal(a.getMaps())
+	models.GetArticleTotal(a.getMaps())
 }
 
 func (a *Article) getMaps() map[string]interface{} {

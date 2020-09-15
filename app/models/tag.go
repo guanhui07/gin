@@ -27,14 +27,19 @@ func GetTagTotal(maps interface{}) (count int) {
 	return
 }
 
-func ExistTagByName(name string) bool {
+// ExistTagByName checks if there is a tag with the same name
+func ExistTagByName(name string) (bool, error) {
 	var tag Tag
-	db.Select("id").Where("name = ?", name).First(&tag)
-	if tag.ID > 0 {
-		return true
+	err := db.Select("id").Where("name = ? AND deleted_on = ? ", name, 0).First(&tag).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return false, err
 	}
 
-	return false
+	if tag.ID > 0 {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 func AddTag(name string, state int, createdBy string) bool {
@@ -59,14 +64,26 @@ func (tag *Tag) BeforeUpdate(scope *gorm.Scope) error {
 	return nil
 }
 
-func ExistTagByID(id int) bool {
+//func ExistTagByID(id int) bool {
+//	var tag Tag
+//	db.Select("id").Where("id = ?", id).First(&tag)
+//	if tag.ID > 0 {
+//		return true
+//	}
+//
+//	return false
+//}
+func ExistTagByID(id int) (bool, error) {
 	var tag Tag
-	db.Select("id").Where("id = ?", id).First(&tag)
+	err := db.Select("id").Where("id = ? AND deleted_on = ? ", id, 0).First(&tag).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return false, err
+	}
 	if tag.ID > 0 {
-		return true
+		return true, nil
 	}
 
-	return false
+	return false, nil
 }
 
 func DeleteTag(id int) bool {

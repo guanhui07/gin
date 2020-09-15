@@ -19,7 +19,7 @@ func GetArticles(c *gin.Context) {
 	code := e.SUCCESS
 	var viewArticles []viewModels.Article
 	var viewArticle viewModels.Article
-	articles := models.GetArticles(util.GetPage(c), setting.PageSize, maps)
+	articles, _ := models.GetArticles(util.GetPage(c), setting.PageSize, maps)
 	for _, articles := range articles {
 		viewArticle.Id = articles.ID
 		viewArticle.Author = articles.CreatedBy

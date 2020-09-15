@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"gin-orm/pkg/app"
 	"gin-orm/pkg/e"
 	"gin-orm/pkg/setting"
 	"gin-orm/pkg/util"
@@ -16,6 +17,7 @@ import (
 
 //获取单个文章
 func GetArticle(c *gin.Context) {
+	appG := app.Gin{C: c}
 	id := com.StrTo(c.Param("id")).MustInt()
 
 	valid := validation.Validation{}
@@ -24,12 +26,17 @@ func GetArticle(c *gin.Context) {
 	code := e.INVALID_PARAMS
 	var data interface{}
 	if !valid.HasErrors() {
-		if models.ExistArticleByID(id) {
-			data = models.GetArticle(id)
-			code = e.SUCCESS
-		} else {
-			code = e.ERROR_NOT_EXIST_ARTICLE
+		exists, err := models.ExistArticleByID(id)
+
+		if err != nil {
+			appG.Response(http.StatusInternalServerError, e.ERROR_CHECK_EXIST_ARTICLE_FAIL, nil)
+			return
 		}
+		if !exists {
+			appG.Response(http.StatusOK, e.ERROR_NOT_EXIST_ARTICLE, nil)
+			return
+		}
+
 	} else {
 		for _, err := range valid.Errors {
 			log.Printf("err.key: %s, err.message: %s", err.Key, err.Message)
@@ -37,7 +44,7 @@ func GetArticle(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"code": code,
+		"code": http.StatusOK,
 		"msg":  e.GetMsg(code),
 		"data": data,
 	})
@@ -45,6 +52,7 @@ func GetArticle(c *gin.Context) {
 
 //获取多个文章
 func GetArticles(c *gin.Context) {
+	appG := app.Gin{C: c}
 	data := make(map[string]interface{})
 	maps := make(map[string]interface{})
 	valid := validation.Validation{}
@@ -68,9 +76,19 @@ func GetArticles(c *gin.Context) {
 	code := e.INVALID_PARAMS
 	if !valid.HasErrors() {
 		code = e.SUCCESS
+		atticles, err := models.GetArticles(util.GetPage(c), setting.PageSize, maps)
+		if err != nil {
+			appG.Response(http.StatusInternalServerError, e.ERROR_GET_ARTICLES_FAIL, nil)
+			return
+		}
 
-		data["lists"] = models.GetArticles(util.GetPage(c), setting.PageSize, maps)
-		data["total"] = models.GetArticleTotal(maps)
+		total, err := models.GetArticleTotal(maps)
+		if err != nil {
+			appG.Response(http.StatusInternalServerError, e.ERROR_COUNT_ARTICLE_FAIL, nil)
+			return
+		}
+		data["lists"] = atticles
+		data["total"] = total
 
 	} else {
 		for _, err := range valid.Errors {
@@ -104,7 +122,8 @@ func AddArticle(c *gin.Context) {
 
 	code := e.INVALID_PARAMS
 	if !valid.HasErrors() {
-		if models.ExistTagByID(tagId) {
+		exists, _ := models.ExistTagByID(tagId) //todo
+		if exists {
 			data := make(map[string]interface{})
 			data["tag_id"] = tagId
 			data["title"] = title
@@ -133,6 +152,7 @@ func AddArticle(c *gin.Context) {
 
 //修改文章
 func EditArticle(c *gin.Context) {
+	appG := app.Gin{C: c}
 	valid := validation.Validation{}
 
 	id := com.StrTo(c.Param("id")).MustInt()
@@ -157,8 +177,20 @@ func EditArticle(c *gin.Context) {
 
 	code := e.INVALID_PARAMS
 	if !valid.HasErrors() {
-		if models.ExistArticleByID(id) {
-			if models.ExistTagByID(tagId) {
+		exists, err := models.ExistArticleByID(id)
+		if err != nil {
+			appG.Response(http.StatusInternalServerError, e.ERROR_CHECK_EXIST_ARTICLE_FAIL, nil)
+			return
+		}
+
+		exists1, err := models.ExistTagByID(tagId)
+		if err != nil {
+			appG.Response(http.StatusInternalServerError, e.ERROR_EXIST_TAG_FAIL, nil)
+			return
+		}
+
+		if exists {
+			if exists1 {
 				data := make(map[string]interface{})
 				if tagId > 0 {
 					data["tag_id"] = tagId
@@ -205,7 +237,8 @@ func DeleteArticle(c *gin.Context) {
 
 	code := e.INVALID_PARAMS
 	if !valid.HasErrors() {
-		if models.ExistArticleByID(id) {
+		exists, _ := models.ExistArticleByID(id)
+		if exists {
 			models.DeleteArticle(id)
 			code = e.SUCCESS
 		} else {
